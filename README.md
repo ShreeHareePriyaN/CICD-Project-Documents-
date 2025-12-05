@@ -1,0 +1,212 @@
+						PROJECT: AWS CI/CD Pipeline
+
+Objective:
+
+	Deploy a simple web page (index.html) to an EC2 instance via AWS CodePipeline using CodeDeploy, with source from GitHub
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Step 1: Create Project Folder
+
+	Create a folder with the following structure:
+
+CICD-Project/
+├── index.html
+├── appspec.yml
+├── buildspec.yml
+└── scripts/
+├── install.sh
+└── start.sh
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Step 2: Add Content
+
+
+index.html:
+
+  <html>
+    <body>
+      <h1>Welcome to my CI/CD Project!</h1>
+      <p>Deployed via AWS CodeDeploy + CodePipeline</p>
+    </body>
+  </html>
+
+	-------------------------------------------------------
+
+appspec.yml:
+
+
+version: 0.0
+os: linux
+
+files:
+  - source: /
+    destination: /var/www/html
+
+hooks:
+  BeforeInstall:
+    - location: scripts/install.sh
+      timeout: 300
+  AfterInstall:
+    - location: scripts/start.sh
+      timeout: 300
+
+	-------------------------------------------------------
+buildspec.yml:
+  
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo "Nothing to install"
+  build:
+    commands:
+      - echo "Build completed"
+artifacts:
+  files:
+    - '**/*'
+
+	-------------------------------------------------------
+
+install.sh:
+  
+#!/bin/bash
+  
+echo "Installing dependencies..."
+
+	-------------------------------------------------------
+
+start.sh:
+
+#!/bin/bash
+ 
+echo "Starting application..."
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Step 3:  GIT BASH
+
+cd /c/Users/hp/Downloads/CICD-Project
+git init
+git add .
+git commit -m "Initial commit for CI/CD project"
+
+Add Remote GitHub Repository
+
+git remote add origin https://github.com/SHREEHAREEPRIYAN/CICD-Project.git
+git branch -M main
+git push -u origin main
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Step 4: GITHUB
+
+	Create a new repository named `CICD-Project`
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Step 5: GIT Bash
+
+chmod +x scripts/install.sh scripts/start.sh
+git add scripts/install.sh scripts/start.sh
+git commit -m "Make scripts executable"
+git push origin main
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Step 6: AWS CONSOLE (IAM ROLES)
+
+	Create IAM Role for CodeDeploy
+
+IAM → Roles → Create Role → AWS Service → CodeDeploy
+Attach `AmazonEC2RoleforAWSCodeDeploy` policy.
+Name the role: `CodeDeploy-EC2-Role`
+
+	Create IAM Role for CodePipeline
+
+IAM → Roles → Create Role → AWS Service → CodePipeline
+Attach `AWSCodePipelineFullAccess`, `AmazonS3FullAccess`, `AWSCodeDeployFullAccess`
+Name it: `CodePipeline-Service-Role`
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Step 7: Launch EC2
+
+	EC2 → Instances → Launch instance → Name, AMI, Security (enable SSH and HTTP), Attach `CodeDeploy-EC2-Role`→ Launch instance
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+Step 8: AWS CONSOLE (CODEDEPLOY)
+
+
+Create Application
+
+CodeDeploy → Applications → Create application
+Name: `CICD-App`
+Compute platform: EC2/On-premises
+
+Create Deployment Group
+
+Name: `CICD-Deployment-Group`
+Service role: `CodeDeploy-EC2-Role`
+Select EC2 instances by tag (e.g., Name = CICD-Instance)
+Deployment type: In-place
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Step 9: AWS CONSOLE (CODEPIPELINE)
+
+Create Pipeline
+
+CodePipeline → Create pipeline → Name: `CICD-Pipeline`
+Service role: `CodePipeline-Service-Role`
+Advanced settings: Default
+
+Add Source Stage
+
+Source provider: GitHub
+Connect to GitHub
+Repository: `CICD-Project`
+Branch: `main`
+Change detection: GitHub webhook
+
+Add Build Stage (Optional)
+Build provider: AWS CodeBuild (can skip if no build required) Or use default
+
+Add Deploy Stage
+
+Deploy provider: AWS CodeDeploy
+Application name: `CICD-App`
+Deployment group: `CICD-Deployment-Group`
+
+Review and Create Pipeline
+
+Pipeline will automatically start first execution
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Step 10: EC2 launch via PUTTY
+
+Check deployed files
+
+ls
+index.html, scripts/, etc. should appear
+
+Test web page
+
+
+Open browser and paste `http://<EC2-PUBLIC-IP>`
+
+Should Appear: 
+
+  Welcome to my CI/CD Project!
+  Deployed via AWS CodeDeploy + CodePipeline
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+CodePipeline execution: Successful 
+CodeDeploy deployment: Successful 
+EC2 instance serving page: Verified 
+
+---------------------------------------------------------------------------------------------------------------------------------------------
