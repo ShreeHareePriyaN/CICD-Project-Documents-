@@ -11,12 +11,12 @@ Step 1: Create Project Folder
 	Create a folder with the following structure:
 
 CICD-Project/
-├── index.html
-├── appspec.yml
-├── buildspec.yml
-└── scripts/
-├── install.sh
-└── start.sh
+index.html
+appspec.yml
+buildspec.yml
+scripts/ 
+	install.sh
+	start.sh
 
 ---------------------------------------------------------------------------------------------------------------------------------------------
 
